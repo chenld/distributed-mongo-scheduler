@@ -1,0 +1,29 @@
+*~
+*.class
+*.log*
+*.setting
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Idea specific files #
+*.iml
+*.ipr
+*.iws
+**/.idea/*
+
+# Eclipse specific files
+*/.classpath/*
+*/.project/*
+*/.settings/*
+*/bin/
+
+
+#Idea specific files
+build/
+.gradle/
+out/
+
+      
