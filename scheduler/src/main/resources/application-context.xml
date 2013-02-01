@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+            http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+            http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+
+    <context:property-placeholder location="classpath:scheduler.properties"/>
+
+    <context:annotation-config/>
+    <context:component-scan base-package="in.co.ee"/>
+    <task:annotation-driven/>
+
+    <!-- Configuring aspectJ proxy-->
+    <aop:aspectj-autoproxy/>
+
+    <task:scheduled-tasks scheduler="myScheduler">
+        <task:scheduled ref="task" method="someTask" cron="*/5 * * * *"/>
+    </task:scheduled-tasks>
+
+    <task:scheduler id="myScheduler" pool-size="10"/>
+
+    <!-- Mongo config -->
+
+    <mongo:mongo host="localhost" port="27017" />
+
+    <mongo:db-factory dbname="scheduler" mongo-ref="mongo"/>
+
+    <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
+        <constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/>
+    </bean>
+
+    <mongo:repositories base-package="uk.co.o2.myo2middleware.reporting.persistence">
+        <mongo:repository id="reportsRepository" custom-impl-ref="indexedReportsRepository"/>
+    </mongo:repositories>
+
+
+</beans>
+	
