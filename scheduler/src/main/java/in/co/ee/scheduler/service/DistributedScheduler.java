@@ -46,11 +46,8 @@ public class DistributedScheduler {
     }
 
     private void updateStatus(Task task, Task.Status status) throws OptimisticLockingException {
-        ObjectId oldLockVersion = task.getLockVersion();
-        Query query = query(where("name").is(task.getName()));
-        query.addCriteria(where("lockVersion").is(oldLockVersion));
-        query.addCriteria(where("status").ne(Task.Status.STARTED));
-        Update update = Update.update("status", status).addToSet("lockVersion", new ObjectId());
+        Query query = query(where("name").is(task.getName())).addCriteria(where("lockVersion").is(task.getLockVersion())).addCriteria(where("status").ne(Task.Status.STARTED));
+        Update update = Update.update("status", status).set("lockVersion", new ObjectId());
         WriteResult result = mongoTemplate.updateMulti(query, update, Task.class);
         if(result.getN() != 1) {
            throw new OptimisticLockingException();

@@ -3,10 +3,9 @@ package in.co.ee.scheduler.aspect;
 import in.co.ee.scheduler.model.DistributedTask;
 import in.co.ee.scheduler.model.OptimisticLockingException;
 import in.co.ee.scheduler.service.DistributedScheduler;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.After;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -28,21 +27,24 @@ public class DistributedTaskAspect {
         this.distributedScheduler = distributedScheduler;
     }
 
-    @Before("execution(* *.*(..)) && @annotation(distributedTask)")
-    public void beforeTaskExecution(ProceedingJoinPoint joinPoint, DistributedTask distributedTask) throws Throwable {
+    @Pointcut("@annotation(distributedTask)")
+    public void interceptTask(DistributedTask distributedTask) {
+        System.out.print("POINTCUT");
+    }
+
+    @Around("interceptTask(distributedTask)")
+    public Object beforeTaskExecution(ProceedingJoinPoint joinPoint, DistributedTask distributedTask) throws Throwable {
+        Object output = null;
         try {
-            boolean canExecute = distributedScheduler.acquireLock(distributedTask.name());
+            boolean canExecute = distributedScheduler.acquireLock("NAME");
             if(canExecute)  {
-                joinPoint.proceed() ;
+                output = joinPoint.proceed();
+                distributedScheduler.releaseLock("NAME");
             }
         } catch (OptimisticLockingException exception) {
 
         }
-    }
-
-    @After("execution(* *.*(..)) && @annotation(distributedTask)")
-    public void afterTaskExecution(ProceedingJoinPoint joinPoint, DistributedTask distributedTask) throws Throwable {
-        distributedScheduler.releaseLock(distributedTask.name());
+        return output;
     }
 
 

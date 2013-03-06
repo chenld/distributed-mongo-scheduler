@@ -10,8 +10,6 @@
             http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
             http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
 
-    <context:property-placeholder location="classpath:scheduler.properties"/>
-
     <context:annotation-config/>
     <context:component-scan base-package="in.co.ee"/>
     <task:annotation-driven/>
@@ -25,8 +23,11 @@
 
     <mongo:db-factory dbname="scheduler" mongo-ref="mongo"/>
 
+    <bean id="writeConcernResolver" class="in.co.ee.scheduler.service.DistributedSchedulerWriteConcernResolver" />
+
     <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
         <constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/>
+        <property name="writeConcernResolver" ref="writeConcernResolver" />
     </bean>
 
 
