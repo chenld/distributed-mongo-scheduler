@@ -5,6 +5,7 @@ import in.co.ee.scheduler.model.OptimisticLockingException;
 import in.co.ee.scheduler.model.Task;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -39,15 +40,19 @@ public class DistributedScheduler {
         }
         if(task == null) {
             task = new Task(taskName);
-            mongoTemplate.save(task);
+            try {
+                mongoTemplate.save(task);
+            } catch (DuplicateKeyException duplicateKey) {
+                throw new OptimisticLockingException();
+            }
         }
-        updateStatus(task, Task.Status.STARTED);
+        startTask(task);
         return true;
     }
 
-    private void updateStatus(Task task, Task.Status status) throws OptimisticLockingException {
+    private void startTask(Task task) throws OptimisticLockingException {
         Query query = query(where("name").is(task.getName())).addCriteria(where("lockVersion").is(task.getLockVersion())).addCriteria(where("status").ne(Task.Status.STARTED));
-        Update update = Update.update("status", status).set("lockVersion", new ObjectId());
+        Update update = Update.update("status", Task.Status.STARTED).set("lockVersion", new ObjectId());
         WriteResult result = mongoTemplate.updateMulti(query, update, Task.class);
         if(result.getN() != 1) {
            throw new OptimisticLockingException();
